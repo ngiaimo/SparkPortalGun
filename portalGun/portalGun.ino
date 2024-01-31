@@ -1,11 +1,11 @@
 // Code to control a Rick and Morty Portal Gun
 // Written by Brandon Pomeroy, 2015
+// Updated by BrokenSaint, 2024
 
 /*
 ******** Required Libraries *************
 * ClickEncoder - https://github.com/0xPIT/encoder
-* Adafruit_GFX - https://github.com/adafruit/Adafruit-GFX-Library
-* Adafruit_LEDBackpack - https://github.com/adafruit/Adafruit-LED-Backpack-Library
+* Sparkfun Alphanumeric Display - https://github.com/sparkfun/SparkFun_Alphanumeric_Display_Arduino_Library (update)
 */
 
 
@@ -16,7 +16,7 @@
 * LiPoly Battety 3.7V - http://www.adafruit.com/products/1578
 * Rotary Encoder - http://www.adafruit.com/products/377
 * Metal Knob - http://www.adafruit.com/products/2056
-* Quad Alphanumeric Display (Red 0.54") - http://www.adafruit.com/products/1911
+* SparkFun Qwiic Alphanumeric Display - Red - https://www.sparkfun.com/products/16916 (update)
 * 10mm Diffused Green LED (x4) - https://www.adafruit.com/products/844
 * 10mm Plastic Bevel LED Holder (x4) - https://www.adafruit.com/products/2171
 * 150 Ohm Resistor (x4) for LEDs
@@ -26,15 +26,18 @@
 */
 
 #include <Wire.h>
-#include "Adafruit_LEDBackpack.h"
-#include "Adafruit_GFX.h"
+// #include "Adafruit_LEDBackpack.h"
+// #include "Adafruit_GFX.h"
 #include <ClickEncoder.h>
 #include <TimerOne.h>
 #include <avr/sleep.h>
 #include <avr/power.h>
+// #include <Adafruit_I2CDevice.h>
+#include <SparkFun_Alphanumeric_Display.h> //Click here to get the library: http://librarymanager/All#SparkFun_Qwiic_Alphanumeric_Display by SparkFun
 
 // Set up our LED display
 Adafruit_AlphaNum4 alpha4 = Adafruit_AlphaNum4();
+HT16K33 display; // Sparkfun display
 char displayBuffer[4];
 uint8_t dimensionLetter='C';
 
@@ -80,7 +83,16 @@ void timerIsr() {
 
 void setup() {
   enablePinInterupt(NAV0_PIN);
-  
+  Serial.begin(19200); //added
+  delay(1000);
+  Wire.begin();
+  if (display.begin() == false)
+  {
+    Serial.println("Device did not acknowledge! Freezing.");
+    while (1);
+  }
+  Serial.println("Display acknowledged.");
+
   //Set up pin modes
   pinMode(topBulbPin, OUTPUT);
   pinMode(frontRightPin, OUTPUT);
@@ -95,7 +107,7 @@ void setup() {
   
   
   encoderSetup();
-  alpha4.begin(0x70);  // pass in the address for the LED display
+  //alpha4.begin(0x70);  // pass in the address for the LED display
   
   justWokeUp = false;
   
@@ -118,26 +130,27 @@ void loop() {
     case ClickEncoder::Held:
       // Holding the button will put your trinket to sleep.
       // The trinket will wake on the next button press
-      alpha4.clear();
-      alpha4.writeDigitAscii(0, 'R');
-      alpha4.writeDigitAscii(1, 'I');
-      alpha4.writeDigitAscii(2, 'C');
-      alpha4.writeDigitAscii(3, 'K');
+      display.clear();
+      display.printChar('R', 0);
+      display.printChar('I', 1);
+      display.printChar('C', 2);
+      display.printChar('K', 3);
+     
       digitalWrite(frontRightPin, LOW);
       digitalWrite(frontLeftPin, LOW);
       digitalWrite(frontCenterPin, LOW);
       digitalWrite(topBulbPin, LOW);
-      alpha4.writeDisplay();
+      display.updateDisplay();
       delay(5000);
-      alpha4.clear();
-      alpha4.writeDisplay();
+      display.clear();
+      display.updateDisplay();
       delay(5000);
       justWokeUp = true;
       goToSleep();
     break;
     case ClickEncoder::Clicked:
       // When the encoder wheel is single clicked
-   
+      Serial.println("Single Click!");
     break;
     case ClickEncoder::DoubleClicked:
       //If you double click the button, it sets the dimension to C137
@@ -193,13 +206,21 @@ void updateDimension(){
     last = value;
   }
   
+  //Serial.print(displayBuffer[0]);
+  //Serial.print(displayBuffer[1]);
+  //Serial.print(displayBuffer[2]);
+  //Serial.println("");
   sprintf(displayBuffer, "%03i", value);
-  alpha4.clear();
-  alpha4.writeDigitAscii(0, dimensionLetter);
-  alpha4.writeDigitAscii(1, displayBuffer[0]);
-  alpha4.writeDigitAscii(2, displayBuffer[1]);
-  alpha4.writeDigitAscii(3, displayBuffer[2]);
-  alpha4.writeDisplay();
+  display.clear();
+  display.printChar(dimensionLetter, 0);
+  display.printChar(displayBuffer[0],1);
+  display.printChar(displayBuffer[1],2);
+  display.printChar(displayBuffer[2],3);
+  //alpha4.writeDigitAscii(0, dimensionLetter);
+  //alpha4.writeDigitAscii(1, displayBuffer[0]);
+  //alpha4.writeDigitAscii(2, displayBuffer[1]);
+  //alpha4.writeDigitAscii(3, displayBuffer[2]);
+  display.updateDisplay();
 }
 
 
@@ -300,6 +321,7 @@ void displayTest() {
   // display every character, 
   for (uint8_t i='!'; i<='z'; i++) {
     alpha4.writeDigitAscii(0, i);
+    Serial.print(i);
     alpha4.writeDigitAscii(1, i+1);
     alpha4.writeDigitAscii(2, i+2);
     alpha4.writeDigitAscii(3, i+3);
