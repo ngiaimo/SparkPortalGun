@@ -1,3 +1,21 @@
+# Changes
+This fork is just to change the code to work with a Sparkfun display instead of Adafruit.
+
+- [LED Display](https://www.sparkfun.com/products/16919)
+- [Display Library](https://github.com/sparkfun/Qwiic_Alphanumeric_Display_Breakout)
+
+- Below is an additional breadboard circuit diagram:\
+![PortalGun Breadboard V2](https://github.com/ngiaimo/SparkPortalGun/assets/2071049/f1b49a7b-821c-4a86-84d9-2c6eafcd612a)
+
+- The following is the schematic:\
+[PortalGun Breadboard V2.pdf](https://github.com/ngiaimo/SparkPortalGun/files/14116713/PortalGun.Breadboard.V2.pdf)
+
+## To Do
+1. Make sure that the flickering originally seen was just due to connection issues, else look into tweaking code to prevent this.
+2. Clean up code, remove anything no longer needed.
+3. Add fun custom stuff.
+
+/**********************************************************************************************/
 # PortalGun
 Code to control a Portal Gun (From Rick and Morty)
 
